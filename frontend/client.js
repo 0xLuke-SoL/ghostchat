@@ -272,7 +272,7 @@ function handleWS(msg) {
     const other = msg.from === myCode ? msg.to : msg.from;
     addOrUpdateDirectChat(other);
 
-    // salva sempre in memoria
+    // salva sempre in memoria (solo qui)
     pushMessageToStore('direct', other, {
       kind: 'text',
       from: msg.from,
@@ -355,7 +355,6 @@ function handleWS(msg) {
       pending: msg.pending
     });
   } else if (msg.type === 'group_msg') {
-    // salva messaggio del gruppo
     pushMessageToStore('group', msg.groupId, {
       kind: 'text',
       from: msg.from,
@@ -418,21 +417,7 @@ function sendCurrentMessage() {
       to: currentChat.id,
       text
     }));
-
-    // salva subito anche localmente
-    pushMessageToStore('direct', currentChat.id, {
-      kind: 'text',
-      from: myCode,
-      isMe: true,
-      text,
-      ts: Date.now()
-    });
-    addMessageBubble({
-      from: myCode,
-      isMe: true,
-      text,
-      ts: Date.now()
-    });
+    // niente push/add locale: si aggiorna quando torna il direct_msg
 
   } else if (currentChat.type === 'group') {
     ws.send(JSON.stringify({
@@ -440,20 +425,7 @@ function sendCurrentMessage() {
       groupId: currentChat.id,
       text
     }));
-
-    pushMessageToStore('group', currentChat.id, {
-      kind: 'text',
-      from: myCode,
-      isMe: true,
-      text,
-      ts: Date.now()
-    });
-    addMessageBubble({
-      from: myCode,
-      isMe: true,
-      text,
-      ts: Date.now()
-    });
+    // idem, solo via WS
   }
 }
 
@@ -528,7 +500,6 @@ function renderChatMessagesFromStore() {
 
 function selectDirectChat(code) {
   currentChat = { type: 'direct', id: code };
-  // azzera unread
   const info = directChats.get(code) || { unread: 0 };
   info.unread = 0;
   directChats.set(code, info);
@@ -667,21 +638,7 @@ async function toggleVoiceRecording() {
         const base64 = await blobToBase64(blob);
         const audioDataUrl = `data:audio/webm;codecs=opus;base64,${base64}`;
 
-        // salva subito in memoria
-        pushMessageToStore('direct', currentChat.id, {
-          kind: 'voice',
-          from: myCode,
-          isMe: true,
-          audio: audioDataUrl,
-          ts: Date.now()
-        });
-        addVoiceMessageBubble({
-          from: myCode,
-          isMe: true,
-          audio: audioDataUrl,
-          ts: Date.now()
-        });
-
+        // niente push/add locale: lo farà handleWS quando arriva il voice_msg
         sendVoiceMessage(audioDataUrl);
         resetRecordingState();
       };
