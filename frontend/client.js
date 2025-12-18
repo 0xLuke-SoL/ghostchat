@@ -1,9 +1,11 @@
+// ===== STATE =====
 let myCode = null;
 let token = null;
 let ws = null;
 
 let currentChat = { type: null, id: null }; // { type: 'direct'|'group', id: '02'|groupId }
 
+// DOM
 const incomingRequestsEl = document.getElementById('incomingRequests');
 const groupInvitesEl = document.getElementById('groupInvites');
 const myGroupsEl = document.getElementById('myGroups');
@@ -14,50 +16,132 @@ const wsStatusEl = document.getElementById('wsStatus');
 const chatInputEl = document.getElementById('chatInput');
 const btnSendMsg = document.getElementById('btnSendMsg');
 
-// Registrazione
+// small toast for status messages
+let toastTimeout = null;
+function showToast(text) {
+  let el = document.getElementById('toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.style.position = 'fixed';
+    el.style.left = '50%';
+    el.style.bottom = '18px';
+    el.style.transform = 'translateX(-50%)';
+    el.style.background = 'rgba(15,20,40,0.96)';
+    el.style.border = '1px solid rgba(115,129,190,0.8)';
+    el.style.borderRadius = '999px';
+    el.style.padding = '6px 14px';
+    el.style.fontSize = '12px';
+    el.style.color = '#f5f5f7';
+    el.style.zIndex = '9999';
+    el.style.boxShadow = '0 16px 32px rgba(0,0,0,0.9)';
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+  el.style.opacity = '1';
+
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    el.style.opacity = '0';
+  }, 2200);
+}
+
+// ===== HELPERS STORAGE =====
+const STORAGE_KEY = 'ghostchat_auth';
+
+function saveAuth(code, pin, token) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ code, pin, token }));
+  } catch {}
+}
+function loadAuth() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+function clearAuth() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {}
+}
+
+// ===== REGISTRAZIONE =====
 document.getElementById('btnRegister').addEventListener('click', async () => {
   const res = await fetch('/api/register', { method: 'POST' });
   const data = await res.json();
   document.getElementById('registerResult').textContent =
-    `Il tuo codice è ${data.code}, PIN ${data.pin}. Salvali!`;
+    `Your code is ${data.code}, PIN ${data.pin}. Save them – you need both to come back.`;
 });
 
-// Login
+// ===== LOGIN =====
 document.getElementById('btnLogin').addEventListener('click', async () => {
   const code = document.getElementById('loginCode').value.trim();
   const pin = document.getElementById('loginPin').value.trim();
-  if (!code || !pin) return alert('Inserisci codice e PIN');
-
-  const res = await fetch('/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code, pin })
-  });
-
-  if (!res.ok) {
-    alert('Codice o PIN non validi');
+  if (!code || !pin) {
+    alert('Enter code and PIN');
     return;
   }
-
-  const data = await res.json();
-  token = data.token;
-  myCode = code;
-  connectWS();
+  await doLogin(code, pin, true);
 });
+
+async function doLogin(code, pin, manual = false) {
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, pin })
+    });
+
+    if (!res.ok) {
+      if (manual) alert('Invalid code or PIN');
+      clearAuth();
+      return;
+    }
+
+    const data = await res.json();
+    token = data.token;
+    myCode = code;
+    saveAuth(code, pin, token);
+    showToast(`Logged in as ${code}`);
+    connectWS();
+  } catch (e) {
+    console.error(e);
+    if (manual) alert('Login error');
+  }
+}
+
+// ===== WEBSOCKET (auto‑reconnect) =====
+let reconnectAttempts = 0;
+const MAX_RECONNECT = 5;
 
 function connectWS() {
   if (!token) return;
+
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   ws = new WebSocket(`${proto}://${location.host}/ws?token=${token}`);
 
-  wsStatusEl.textContent = 'connessione...';
+  wsStatusEl.textContent = 'connecting…';
 
   ws.onopen = () => {
     wsStatusEl.textContent = 'online';
+    reconnectAttempts = 0;
+    showToast('Connected');
   };
 
   ws.onclose = () => {
     wsStatusEl.textContent = 'offline';
+    if (reconnectAttempts < MAX_RECONNECT && token) {
+      reconnectAttempts++;
+      const delay = 1000 + reconnectAttempts * 1000;
+      showToast('Reconnecting…');
+      setTimeout(connectWS, delay);
+    } else {
+      showToast('Connection lost');
+    }
   };
 
   ws.onmessage = (ev) => {
@@ -71,20 +155,21 @@ function connectWS() {
   };
 }
 
+// ===== HANDLER MESSAGGI WS =====
 function handleWS(msg) {
   if (msg.type === 'hello') {
-    console.log('Logged as', msg.code);
+    // nothing special
   }
 
-  // === 1:1 ===
+  // 1:1
   if (msg.type === 'pair_request') {
     const item = document.createElement('div');
     item.className = 'list-item';
     item.innerHTML = `
-      <span>Richiesta da <strong>${msg.from}</strong></span>
+      <span>Request from <strong>${msg.from}</strong></span>
       <div>
-        <button class="btn small accent btn-accept">Accetta</button>
-        <button class="btn small" data-type="decline">Rifiuta</button>
+        <button class="btn small accent btn-accept">Accept</button>
+        <button class="btn small" data-type="decline">Decline</button>
       </div>
     `;
     const acceptBtn = item.querySelector('.btn-accept');
@@ -102,20 +187,11 @@ function handleWS(msg) {
     });
 
     incomingRequestsEl.appendChild(item);
-  }
-
-  else if (msg.type === 'pair_accept') {
+  } else if (msg.type === 'pair_accept') {
     selectDirectChat(msg.from);
-  }
-
-  else if (msg.type === 'pair_decline') {
-    alert(`La tua richiesta a ${msg.from} è stata rifiutata`);
-  }
-
-  else if (msg.type === 'direct_msg') {
-    if (currentChat.type !== 'direct' || currentChat.id !== msg.from) {
-      // se non è la chat aperta, puoi aggiungere logica di "notifica"
-    }
+  } else if (msg.type === 'pair_decline') {
+    alert(`Your request to ${msg.from} was declined`);
+  } else if (msg.type === 'direct_msg') {
     addMessageBubble({
       from: msg.from,
       isMe: msg.from === myCode,
@@ -124,15 +200,15 @@ function handleWS(msg) {
     });
   }
 
-  // === GRUPPI ===
+  // GROUPS
   else if (msg.type === 'group_invite') {
     const g = msg.group;
     const item = document.createElement('div');
     item.className = 'list-item';
     item.innerHTML = `
-      <span>Invito a <strong>${g.name}</strong> (id ${g.id})</span>
+      <span>Invite to <strong>${g.name}</strong></span>
       <div>
-        <button class="btn small accent">Entra</button>
+        <button class="btn small accent">Join</button>
       </div>
     `;
     item.querySelector('button').addEventListener('click', () => {
@@ -140,53 +216,39 @@ function handleWS(msg) {
       item.remove();
     });
     groupInvitesEl.appendChild(item);
-  }
-
-  else if (msg.type === 'group_created' || msg.type === 'group_join') {
+  } else if (msg.type === 'group_created' || msg.type === 'group_join') {
     renderOrUpdateGroup(msg.group || {
       id: msg.groupId,
       members: msg.members,
       pending: msg.pending
     });
-  }
-
-  else if (msg.type === 'group_msg') {
-    if (currentChat.type !== 'group' || currentChat.id !== msg.groupId) {
-      // eventuale notifica
-    }
+  } else if (msg.type === 'group_msg') {
     addMessageBubble({
       from: msg.from,
       isMe: msg.from === myCode,
       text: msg.text,
       ts: msg.ts
     });
-  }
-
-  else if (msg.type === 'group_closed') {
+  } else if (msg.type === 'group_closed') {
     const el = document.querySelector(`[data-group-id="${msg.groupId}"]`);
     if (el) {
-      el.querySelector('.badge').textContent = 'Chiuso';
+      const badge = el.querySelector('.badge');
+      if (badge) badge.textContent = 'Closed';
     }
     if (currentChat.type === 'group' && currentChat.id === msg.groupId) {
-      chatHeaderEl.textContent = 'Gruppo chiuso';
+      chatHeaderEl.textContent = 'Group closed';
     }
-  }
-
-  else if (msg.type === 'group_leave') {
-    // qui potresti aggiornare UI, per ora solo log
-    console.log('group_leave', msg.groupId, msg.code);
   }
 }
 
-// Invia richiesta 1:1
+// ===== INVIO RICHIESTE / MESSAGGI =====
 document.getElementById('btnPairReq').addEventListener('click', () => {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return alert('Non sei connesso');
+  if (!ws || ws.readyState !== WebSocket.OPEN) return alert('Not connected');
   const to = document.getElementById('pairTarget').value.trim();
   if (!to) return;
   ws.send(JSON.stringify({ type: 'pair_request', to }));
 });
 
-// Invio messaggio corrente (1:1 o gruppo)
 btnSendMsg.addEventListener('click', sendCurrentMessage);
 chatInputEl.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
@@ -216,19 +278,18 @@ function sendCurrentMessage() {
   }
 }
 
-// Seleziona chat 1:1
 function selectDirectChat(code) {
   currentChat = { type: 'direct', id: code };
-  chatHeaderEl.textContent = `Chat con ${code}`;
+  chatHeaderEl.textContent = `Chat with ${code}`;
   clearMessages();
 }
 
-// Gruppi: creazione
+// GROUP CREATE
 document.getElementById('btnCreateGroup').addEventListener('click', () => {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return alert('Non sei connesso');
+  if (!ws || ws.readyState !== WebSocket.OPEN) return alert('Not connected');
   const name = document.getElementById('groupName').value.trim() || '';
   const membersRaw = document.getElementById('groupMembers').value.trim();
-  if (!membersRaw) return alert('Inserisci almeno un codice');
+  if (!membersRaw) return alert('Enter at least one code');
 
   const members = membersRaw.split(',').map(s => s.trim()).filter(Boolean);
   ws.send(JSON.stringify({
@@ -238,7 +299,7 @@ document.getElementById('btnCreateGroup').addEventListener('click', () => {
   }));
 });
 
-// Render/aggiorna un gruppo nella lista "I miei gruppi"
+// Render/aggiorna gruppo
 function renderOrUpdateGroup(groupLike) {
   const id = groupLike.id || groupLike.groupId;
   if (!id) return;
@@ -251,19 +312,19 @@ function renderOrUpdateGroup(groupLike) {
     el.innerHTML = `
       <span class="group-label"></span>
       <div>
-        <span class="badge">Attivo</span>
-        <button class="btn small accent">Apri</button>
+        <span class="badge">Active</span>
+        <button class="btn small accent">Open</button>
       </div>
     `;
     el.querySelector('button').addEventListener('click', () => {
       currentChat = { type: 'group', id };
-      chatHeaderEl.textContent = `Gruppo ${id}`;
+      chatHeaderEl.textContent = groupLike.name ? groupLike.name : `Group ${id}`;
       clearMessages();
     });
     myGroupsEl.appendChild(el);
   }
   const lbl = el.querySelector('.group-label');
-  lbl.textContent = groupLike.name ? `${groupLike.name} (${id})` : `Gruppo ${id}`;
+  lbl.textContent = groupLike.name ? `${groupLike.name}` : `Group ${id}`;
 }
 
 // Chat bubbles
@@ -274,7 +335,7 @@ function addMessageBubble({ from, isMe, text, ts }) {
   const el = document.createElement('div');
   el.className = 'msg' + (isMe ? ' me' : '');
   el.innerHTML = `
-    <div class="msg-meta">${isMe ? 'Tu' : from} · ${time}</div>
+    <div class="msg-meta">${isMe ? 'You' : from} · ${time}</div>
     <div class="msg-text"></div>
   `;
   el.querySelector('.msg-text').textContent = text;
@@ -286,3 +347,16 @@ function addMessageBubble({ from, isMe, text, ts }) {
 function clearMessages() {
   chatMessagesEl.innerHTML = '';
 }
+
+// ===== AUTO‑LOGIN ALL’APERTURA =====
+window.addEventListener('load', async () => {
+  const saved = loadAuth();
+  if (!saved) return;
+
+  // Pre‑riempi i campi (utile su desktop)
+  document.getElementById('loginCode').value = saved.code;
+  document.getElementById('loginPin').value = saved.pin;
+
+  // Prova login automatico
+  await doLogin(saved.code, saved.pin, false);
+});
