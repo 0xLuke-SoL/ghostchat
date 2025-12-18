@@ -1,5 +1,7 @@
 :root {
+  /* Tema di default (dark) */
   --bg: #050811;
+  --bg-gradient: radial-gradient(circle at top left, #101524 0, #02030a 60%, #000 100%);
   --card: #101524;
   --accent: #5b5fff;
   --primary: #00b36b;
@@ -9,52 +11,110 @@
   --border: #20263a;
   --radius: 12px;
   --shadow: 0 18px 45px rgba(0,0,0,0.6);
-  --font: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  --input-bg: #050811;
 }
 
-* { box-sizing: border-box; }
+/* Tema chiaro */
+body[data-theme="light"] {
+  --bg: #f5f5f8;
+  --bg-gradient: radial-gradient(circle at top left, #ffffff 0, #f0f2f8 60%, #e3e6f0 100%);
+  --card: #ffffff;
+  --accent: #4b5bff;
+  --primary: #00a05f;
+  --text: #111320;
+  --muted: #6a6c80;
+  --danger: #e03232;
+  --border: #d0d4e4;
+  --shadow: 0 10px 30px rgba(0,0,0,0.12);
+  --input-bg: #f5f6fb;
+}
+
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
-  font-family: var(--font);
-  background: radial-gradient(circle at top left, #101524 0, #02030a 60%, #000 100%);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  background: var(--bg-gradient);
   color: var(--text);
 }
 
+/* ===== LAYOUT BASE ===== */
+
 .app {
   max-width: 1100px;
-  margin: 24px auto 40px;
-  padding: 0 16px 32px;
+  margin: 16px auto 32px;
+  padding: 0 12px 24px;
 }
 
+/* Top bar con toggle tema */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.top-bar-main {
+  flex: 1;
+}
 .top-bar h1 {
   margin: 0 0 4px;
-  font-size: 24px;
+  font-size: 22px;
 }
 .top-bar p {
-  margin: 0 0 16px;
+  margin: 0;
   color: var(--muted);
+  font-size: 13px;
 }
 
+/* Toggle tema */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(16,21,36,0.9);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+body[data-theme="light"] .theme-toggle {
+  background: #ffffff;
+}
+.theme-toggle span {
+  display: inline-block;
+}
+
+/* Sezioni principali */
 .auth-row,
 .chat-row,
 .groups-row {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
+/* Card generica */
 .card {
   background: rgba(16,21,36,0.96);
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-  padding: 16px;
+  padding: 14px;
   flex: 1;
   min-width: 260px;
 }
+body[data-theme="light"] .card {
+  background: var(--card);
+}
 
+/* Card chat principale */
 .chat-card {
   flex: 2;
   min-height: 260px;
@@ -64,7 +124,10 @@ body {
 
 h2, h3, h4 {
   margin-top: 0;
+  margin-bottom: 8px;
 }
+
+/* ===== INPUT & BUTTON ===== */
 
 .input-row {
   display: flex;
@@ -77,7 +140,7 @@ input {
   padding: 8px 10px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: #050811;
+  background: var(--input-bg);
   color: var(--text);
   outline: none;
   font-size: 14px;
@@ -94,6 +157,7 @@ input::placeholder {
   cursor: pointer;
   color: white;
   transition: all 0.15s ease;
+  background: var(--border);
 }
 .btn.primary {
   background: var(--primary);
@@ -109,6 +173,12 @@ input::placeholder {
   transform: translateY(0);
   filter: brightness(0.94);
 }
+.btn.small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* ===== TESTO SECONDARIO ===== */
 
 .small {
   font-size: 12px;
@@ -116,13 +186,15 @@ input::placeholder {
   margin-top: 6px;
 }
 
+/* ===== LISTE (richieste, gruppi, chats) ===== */
+
 .list {
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: #050811;
-  padding: 8px;
+  background: var(--input-bg);
+  padding: 6px;
   min-height: 40px;
-  max-height: 160px;
+  max-height: 170px;
   overflow-y: auto;
   font-size: 13px;
 }
@@ -148,27 +220,83 @@ input::placeholder {
   background: rgba(255,255,255,0.08);
   color: var(--muted);
 }
-
-.btn.small {
-  padding: 4px 10px;
-  font-size: 12px;
+body[data-theme="light"] .badge {
+  background: rgba(0,0,0,0.05);
 }
 
-/* Chat */
+/* Lista chat multiple */
+.chat-list {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  padding: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  font-size: 13px;
+}
+.chat-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.chat-list-item + .chat-list-item {
+  margin-top: 4px;
+}
+.chat-list-item.active {
+  background: rgba(91,95,255,0.18);
+}
+.chat-list-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chat-code {
+  font-weight: 600;
+}
+.chat-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+/* ===== CHAT AREA ===== */
+
 .chat-header {
-  padding: 6px 10px 10px;
+  padding: 6px 10px 8px;
   border-bottom: 1px solid var(--border);
   font-size: 14px;
   color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
+.chat-header-main {
+  display: flex;
+  flex-direction: column;
+}
+.chat-header-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.chat-header-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .chat-messages {
   flex: 1;
   padding: 8px 4px 8px 0;
   overflow-y: auto;
   font-size: 14px;
 }
+
 .msg {
-  max-width: 70%;
+  max-width: 80%;
   margin: 4px 0;
   padding: 6px 10px;
   border-radius: 12px;
@@ -177,6 +305,12 @@ input::placeholder {
 .msg.me {
   margin-left: auto;
   background: #3b49ff;
+}
+body[data-theme="light"] .msg {
+  background: #e3e6ff;
+}
+body[data-theme="light"] .msg.me {
+  background: #4b5bff;
 }
 .msg-meta {
   font-size: 11px;
@@ -188,11 +322,40 @@ input::placeholder {
   word-break: break-word;
 }
 
-/* Responsive */
+/* Player audio nei messaggi */
+.msg audio {
+  width: 100%;
+  margin-top: 2px;
+}
+
+/* ===== RESPONSIVE ===== */
+
 @media (max-width: 768px) {
+  .app {
+    margin-top: 10px;
+    padding: 0 10px 20px;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .auth-row,
   .chat-row,
   .groups-row {
     flex-direction: column;
+  }
+
+  .card {
+    min-width: 100%;
+  }
+
+  .chat-card {
+    min-height: 260px;
+  }
+
+  .chat-messages {
+    padding-right: 0;
   }
 }

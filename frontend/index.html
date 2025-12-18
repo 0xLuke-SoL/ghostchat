@@ -6,19 +6,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body data-theme="dark">
   <div class="app">
     <header class="top-bar">
-      <h1>🔒 GhostChat — Link unico</h1>
-      <p>Apri questo link e usa la piattaforma. Nessuna configurazione.</p>
+      <div class="top-bar-main">
+        <h1>🔒 GhostChat — Link unico</h1>
+        <p>Apri questo link e usa la piattaforma. Nessuna configurazione.</p>
+      </div>
+      <!-- Toggle tema -->
+      <button id="themeToggle" class="theme-toggle">
+        <span id="themeIcon">🌙</span>
+        <span id="themeLabel">Tema scuro</span>
+      </button>
     </header>
 
+    <!-- AUTENTICAZIONE -->
     <section class="auth-row">
       <div class="card">
         <h2>Nuovo</h2>
         <button id="btnRegister" class="btn primary">Ottieni CODICE + PIN</button>
         <div id="registerResult" class="small"></div>
       </div>
+
       <div class="card">
         <h2>Login</h2>
         <div class="input-row">
@@ -26,28 +35,46 @@
           <input id="loginPin" placeholder="PIN" />
           <button id="btnLogin" class="btn accent">Entra</button>
         </div>
-        <div class="small">WS: <span id="wsStatus">offline</span></div>
+        <div class="small">
+          WS: <span id="wsStatus">offline</span>
+        </div>
       </div>
     </section>
 
+    <!-- CHAT 1:1 -->
     <section class="chat-row">
+      <!-- Colonna sinistra: richieste + lista chat aperte -->
       <div class="card">
         <h3>Chat 1:1</h3>
+
+        <!-- Nuova richiesta di chat -->
         <div class="input-row">
           <input id="pairTarget" placeholder="es. 02" />
           <button id="btnPairReq" class="btn accent">Invia richiesta</button>
         </div>
+
         <h4>Richieste in arrivo</h4>
         <div id="incomingRequests" class="list"></div>
+
+        <h4 style="margin-top: 10px;">Le tue chat</h4>
+        <div id="chatList" class="chat-list"></div>
       </div>
 
+      <!-- Colonna destra: area messaggi della chat selezionata -->
       <div class="card chat-card">
-        <div id="chatHeader" class="chat-header">Nessuna chat selezionata</div>
+        <div id="chatHeader" class="chat-header">
+          <div class="chat-header-main">
+            <div class="chat-header-title">Nessuna chat selezionata</div>
+            <div class="chat-header-sub">Seleziona o crea una chat 1:1 per iniziare.</div>
+          </div>
+        </div>
+
         <div id="chatMessages" class="chat-messages"></div>
+
         <div class="input-row">
           <input id="chatInput" placeholder="Scrivi un messaggio..." />
           <button id="btnSendMsg" class="btn accent">Invia</button>
-          <!-- Nuovo bottone per messaggi vocali -->
+          <!-- Bottone per messaggi vocali -->
           <button id="btnRecordVoice" class="btn">🎙</button>
         </div>
         <!-- Stato registrazione vocale -->
@@ -57,6 +84,7 @@
       </div>
     </section>
 
+    <!-- GRUPPI -->
     <section class="groups-row">
       <div class="card">
         <h3>Gruppi</h3>

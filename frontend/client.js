@@ -3,7 +3,11 @@ let myCode = null;
 let token = null;
 let ws = null;
 
-let currentChat = { type: null, id: null }; // { type: 'direct'|'group', id: '02'|groupId }
+// chat correntemente aperta: { type: 'direct'|'group', id: '02'|groupId }
+let currentChat = { type: null, id: null };
+
+// mappa delle chat 1:1: code -> { unread: number }
+const directChats = new Map();
 
 // DOM
 const incomingRequestsEl = document.getElementById('incomingRequests');
@@ -15,16 +19,21 @@ const wsStatusEl = document.getElementById('wsStatus');
 
 const chatInputEl = document.getElementById('chatInput');
 const btnSendMsg = document.getElementById('btnSendMsg');
+const chatListEl = document.getElementById('chatList');
 
-// NUOVO: elementi per i messaggi vocali
+// messaggi vocali
 const btnRecordVoice = document.getElementById('btnRecordVoice');
 const recordStatusEl = document.getElementById('recordStatus');
 
-// stato registrazione vocale
 let mediaRecorder = null;
 let audioChunks = [];
 let isRecording = false;
 let recordTimeout = null;
+
+// tema
+const themeToggleBtn = document.getElementById('themeToggle');
+const themeIconEl = document.getElementById('themeIcon');
+const themeLabelEl = document.getElementById('themeLabel');
 
 // small toast for status messages
 let toastTimeout = null;
@@ -58,6 +67,7 @@ function showToast(text) {
 
 // ===== HELPERS STORAGE =====
 const STORAGE_KEY = 'ghostchat_auth';
+const THEME_KEY = 'ghostchat_theme';
 
 function saveAuth(code, pin, token) {
   try {
@@ -79,12 +89,53 @@ function clearAuth() {
   } catch {}
 }
 
+function saveTheme(theme) {
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {}
+}
+function loadTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY);
+  } catch {
+    return null;
+  }
+}
+
+// ===== TEMA CHIARO/SCURO =====
+function applyTheme(theme) {
+  const body = document.body;
+  const t = theme === 'light' ? 'light' : 'dark';
+  body.setAttribute('data-theme', t);
+  if (t === 'light') {
+    themeIconEl.textContent = '☀️';
+    themeLabelEl.textContent = 'Tema chiaro';
+  } else {
+    themeIconEl.textContent = '🌙';
+    themeLabelEl.textContent = 'Tema scuro';
+  }
+  saveTheme(t);
+}
+
+themeToggleBtn.addEventListener('click', () => {
+  const current = document.body.getAttribute('data-theme') || 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+});
+
 // ===== REGISTRAZIONE =====
 document.getElementById('btnRegister').addEventListener('click', async () => {
   const res = await fetch('/api/register', { method: 'POST' });
   const data = await res.json();
-  document.getElementById('registerResult').textContent =
-    `Your code is ${data.code}, PIN ${data.pin}. Save them – you need both to come back.`;
+  const msg = `Your code is ${data.code}, PIN ${data.pin}. Save them – you need both to come back.`;
+  document.getElementById('registerResult').textContent = msg;
+
+  // auto-compila login
+  const codeInput = document.getElementById('loginCode');
+  const pinInput = document.getElementById('loginPin');
+  codeInput.value = data.code;
+  pinInput.value = data.pin;
+
+  showToast('Codice e PIN compilati nel login');
 });
 
 // ===== LOGIN =====
@@ -168,7 +219,7 @@ function connectWS() {
 // ===== HANDLER MESSAGGI WS =====
 function handleWS(msg) {
   if (msg.type === 'hello') {
-    // nothing special
+    return;
   }
 
   // 1:1
@@ -188,6 +239,7 @@ function handleWS(msg) {
     acceptBtn.addEventListener('click', () => {
       ws.send(JSON.stringify({ type: 'pair_accept', from: msg.from }));
       item.remove();
+      addOrUpdateDirectChat(msg.from);
       selectDirectChat(msg.from);
     });
 
@@ -198,25 +250,63 @@ function handleWS(msg) {
 
     incomingRequestsEl.appendChild(item);
   } else if (msg.type === 'pair_accept') {
+    addOrUpdateDirectChat(msg.from);
     selectDirectChat(msg.from);
   } else if (msg.type === 'pair_decline') {
     alert(`Your request to ${msg.from} was declined`);
   } else if (msg.type === 'direct_msg') {
-    addMessageBubble({
-      from: msg.from,
-      isMe: msg.from === myCode,
-      text: msg.text,
-      ts: msg.ts
-    });
+    addOrUpdateDirectChat(msg.from === myCode ? msg.to : msg.from);
+    const isCurrent =
+      currentChat.type === 'direct' &&
+      (currentChat.id === msg.from || currentChat.id === msg.to);
 
-  // ===== NUOVO: MESSAGGI VOCALI 1:1 =====
-  } else if (msg.type === 'voice_msg') {
-    addVoiceMessageBubble({
-      from: msg.from,
-      isMe: msg.from === myCode,
-      audio: msg.audio,
-      ts: msg.ts
-    });
+    if (!isCurrent) {
+      // incrementa unread sulla chat corrispondente
+      const other = msg.from === myCode ? msg.to : msg.from;
+      const chatInfo = directChats.get(other) || { unread: 0 };
+      chatInfo.unread = (chatInfo.unread || 0) + 1;
+      directChats.set(other, chatInfo);
+      renderChatList();
+      showToast(`Nuovo messaggio da ${other}`);
+    }
+
+    if (
+      currentChat.type === 'direct' &&
+      (currentChat.id === msg.from || currentChat.id === msg.to)
+    ) {
+      addMessageBubble({
+        from: msg.from,
+        isMe: msg.from === myCode,
+        text: msg.text,
+        ts: msg.ts
+      });
+    }
+  }
+
+  // Vocals 1:1
+  else if (msg.type === 'voice_msg') {
+    const other = msg.from === myCode ? msg.to : msg.from;
+    addOrUpdateDirectChat(other);
+
+    const isCurrent =
+      currentChat.type === 'direct' && currentChat.id === other;
+
+    if (!isCurrent) {
+      const chatInfo = directChats.get(other) || { unread: 0 };
+      chatInfo.unread = (chatInfo.unread || 0) + 1;
+      directChats.set(other, chatInfo);
+      renderChatList();
+      showToast(`Nuovo vocale da ${other}`);
+    }
+
+    if (currentChat.type === 'direct' && currentChat.id === other) {
+      addVoiceMessageBubble({
+        from: msg.from,
+        isMe: msg.from === myCode,
+        audio: msg.audio,
+        ts: msg.ts
+      });
+    }
   }
 
   // GROUPS
@@ -242,12 +332,14 @@ function handleWS(msg) {
       pending: msg.pending
     });
   } else if (msg.type === 'group_msg') {
-    addMessageBubble({
-      from: msg.from,
-      isMe: msg.from === myCode,
-      text: msg.text,
-      ts: msg.ts
-    });
+    if (currentChat.type === 'group' && currentChat.id === msg.groupId) {
+      addMessageBubble({
+        from: msg.from,
+        isMe: msg.from === myCode,
+        text: msg.text,
+        ts: msg.ts
+      });
+    }
   } else if (msg.type === 'group_closed') {
     const el = document.querySelector(`[data-group-id="${msg.groupId}"]`);
     if (el) {
@@ -255,17 +347,20 @@ function handleWS(msg) {
       if (badge) badge.textContent = 'Closed';
     }
     if (currentChat.type === 'group' && currentChat.id === msg.groupId) {
-      chatHeaderEl.textContent = 'Group closed';
+      chatHeaderEl.querySelector('.chat-header-title').textContent = 'Group closed';
+      const sub = chatHeaderEl.querySelector('.chat-header-sub');
+      if (sub) sub.textContent = '';
     }
   }
 }
 
-// ===== INVIO RICHIESTE / MESSAGGI =====
+// ===== CHAT 1:1 LISTA E INVIO =====
 document.getElementById('btnPairReq').addEventListener('click', () => {
   if (!ws || ws.readyState !== WebSocket.OPEN) return alert('Not connected');
   const to = document.getElementById('pairTarget').value.trim();
   if (!to) return;
   ws.send(JSON.stringify({ type: 'pair_request', to }));
+  showToast(`Richiesta inviata a ${to}`);
 });
 
 btnSendMsg.addEventListener('click', sendCurrentMessage);
@@ -276,7 +371,7 @@ chatInputEl.addEventListener('keydown', (e) => {
   }
 });
 
-// NUOVO: bottone per il vocale
+// bottone per il vocale
 btnRecordVoice.addEventListener('click', toggleVoiceRecording);
 
 function sendCurrentMessage() {
@@ -300,13 +395,69 @@ function sendCurrentMessage() {
   }
 }
 
+// crea o aggiorna una chat 1:1 in lista
+function addOrUpdateDirectChat(code) {
+  if (!directChats.has(code)) {
+    directChats.set(code, { unread: 0 });
+  }
+  renderChatList();
+}
+
+function renderChatList() {
+  chatListEl.innerHTML = '';
+  const entries = Array.from(directChats.entries());
+  entries.sort((a, b) => a[0].localeCompare(b[0]));
+
+  for (const [code, info] of entries) {
+    const item = document.createElement('div');
+    item.className = 'chat-list-item';
+    if (currentChat.type === 'direct' && currentChat.id === code) {
+      item.classList.add('active');
+    }
+    item.dataset.code = code;
+
+    const left = document.createElement('div');
+    left.className = 'chat-list-left';
+
+    const codeSpan = document.createElement('span');
+    codeSpan.className = 'chat-code';
+    codeSpan.textContent = code;
+
+    left.appendChild(codeSpan);
+
+    item.appendChild(left);
+
+    if (info.unread && info.unread > 0) {
+      const dot = document.createElement('div');
+      dot.className = 'chat-unread-dot';
+      item.appendChild(dot);
+    }
+
+    item.addEventListener('click', () => {
+      selectDirectChat(code);
+    });
+
+    chatListEl.appendChild(item);
+  }
+}
+
 function selectDirectChat(code) {
   currentChat = { type: 'direct', id: code };
-  chatHeaderEl.textContent = `Chat with ${code}`;
+  // azzera unread
+  const info = directChats.get(code) || { unread: 0 };
+  info.unread = 0;
+  directChats.set(code, info);
+  renderChatList();
+
+  const titleEl = chatHeaderEl.querySelector('.chat-header-title');
+  const subEl = chatHeaderEl.querySelector('.chat-header-sub');
+  titleEl.textContent = `Chat con ${code}`;
+  if (subEl) subEl.textContent = 'Messaggi e vocali 1:1';
+
   clearMessages();
 }
 
-// GROUP CREATE
+// ===== GRUPPI =====
 document.getElementById('btnCreateGroup').addEventListener('click', () => {
   if (!ws || ws.readyState !== WebSocket.OPEN) return alert('Not connected');
   const name = document.getElementById('groupName').value.trim() || '';
@@ -321,7 +472,6 @@ document.getElementById('btnCreateGroup').addEventListener('click', () => {
   }));
 });
 
-// Render/aggiorna gruppo
 function renderOrUpdateGroup(groupLike) {
   const id = groupLike.id || groupLike.groupId;
   if (!id) return;
@@ -340,7 +490,10 @@ function renderOrUpdateGroup(groupLike) {
     `;
     el.querySelector('button').addEventListener('click', () => {
       currentChat = { type: 'group', id };
-      chatHeaderEl.textContent = groupLike.name ? groupLike.name : `Group ${id}`;
+      const titleEl = chatHeaderEl.querySelector('.chat-header-title');
+      const subEl = chatHeaderEl.querySelector('.chat-header-sub');
+      titleEl.textContent = groupLike.name ? groupLike.name : `Group ${id}`;
+      if (subEl) subEl.textContent = 'Chat di gruppo';
       clearMessages();
     });
     myGroupsEl.appendChild(el);
@@ -349,7 +502,7 @@ function renderOrUpdateGroup(groupLike) {
   lbl.textContent = groupLike.name ? `${groupLike.name}` : `Group ${id}`;
 }
 
-// Chat bubbles (testo)
+// ===== CHAT BUBBLES =====
 function addMessageBubble({ from, isMe, text, ts }) {
   const d = new Date(ts || Date.now());
   const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
@@ -366,7 +519,6 @@ function addMessageBubble({ from, isMe, text, ts }) {
   chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
-// NUOVO: chat bubble per vocale
 function addVoiceMessageBubble({ from, isMe, audio, ts }) {
   const d = new Date(ts || Date.now());
   const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
@@ -379,7 +531,7 @@ function addVoiceMessageBubble({ from, isMe, audio, ts }) {
 
   const audioEl = document.createElement('audio');
   audioEl.controls = true;
-  audioEl.src = audio; // data URL base64 [web:254][web:257]
+  audioEl.src = audio; // data URL base64
 
   el.appendChild(audioEl);
   chatMessagesEl.appendChild(el);
@@ -402,7 +554,6 @@ async function toggleVoiceRecording() {
   }
 
   if (!isRecording) {
-    // start recording
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); // [web:195][web:193]
       audioChunks = [];
@@ -427,7 +578,7 @@ async function toggleVoiceRecording() {
           return;
         }
 
-        const blob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' }); // [web:202][web:256]
+        const blob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' }); // [web:202]
         const base64 = await blobToBase64(blob);
         const audioDataUrl = `data:audio/webm;codecs=opus;base64,${base64}`;
         sendVoiceMessage(audioDataUrl);
@@ -440,7 +591,6 @@ async function toggleVoiceRecording() {
       btnRecordVoice.textContent = '⏹';
       recordStatusEl.textContent = 'Registrazione... (max 30s)';
 
-      // stop automatico dopo 30 secondi
       recordTimeout = setTimeout(() => {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
           mediaRecorder.stop();
@@ -452,7 +602,6 @@ async function toggleVoiceRecording() {
       resetRecordingState();
     }
   } else {
-    // stop manuale
     if (mediaRecorder && mediaRecorder.state === 'recording') {
       mediaRecorder.stop();
     }
@@ -474,12 +623,12 @@ function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader(); // [web:199]
     reader.onloadend = () => {
-      const dataUrl = reader.result; // data:audio/...;base64,AAA...
+      const dataUrl = reader.result;
       const base64 = dataUrl.split(',')[1];
       resolve(base64);
     };
     reader.onerror = reject;
-    reader.readAsDataURL(blob); // [web:254]
+    reader.readAsDataURL(blob); // [web:198]
   });
 }
 
@@ -494,15 +643,21 @@ function sendVoiceMessage(audioDataUrl) {
   }));
 }
 
-// ===== AUTO‑LOGIN ALL’APERTURA =====
+// ===== AUTO‑LOGIN + TEMA ALL’APERTURA =====
 window.addEventListener('load', async () => {
+  // tema
+  const savedTheme = loadTheme();
+  if (savedTheme) {
+    applyTheme(savedTheme);
+  } else {
+    applyTheme('dark');
+  }
+
   const saved = loadAuth();
   if (!saved) return;
 
-  // Pre‑riempi i campi (utile su desktop)
   document.getElementById('loginCode').value = saved.code;
   document.getElementById('loginPin').value = saved.pin;
 
-  // Prova login automatico
   await doLogin(saved.code, saved.pin, false);
 });
