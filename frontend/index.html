@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>🔒 GhostChat — Link unico</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="top-bar">
+      <h1>🔒 GhostChat — Link unico</h1>
+      <p>Apri questo link e usa la piattaforma. Nessuna configurazione.</p>
+    </header>
+
+    <section class="auth-row">
+      <div class="card">
+        <h2>Nuovo</h2>
+        <button id="btnRegister" class="btn primary">Ottieni CODICE + PIN</button>
+        <div id="registerResult" class="small"></div>
+      </div>
+      <div class="card">
+        <h2>Login</h2>
+        <div class="input-row">
+          <input id="loginCode" placeholder="Codice (01)" />
+          <input id="loginPin" placeholder="PIN" />
+          <button id="btnLogin" class="btn accent">Entra</button>
+        </div>
+        <div class="small">WS: <span id="wsStatus">offline</span></div>
+      </div>
+    </section>
+
+    <section class="chat-row">
+      <div class="card">
+        <h3>Chat 1:1</h3>
+        <div class="input-row">
+          <input id="pairTarget" placeholder="es. 02" />
+          <button id="btnPairReq" class="btn accent">Invia richiesta</button>
+        </div>
+        <h4>Richieste in arrivo</h4>
+        <div id="incomingRequests" class="list"></div>
+      </div>
+
+      <div class="card chat-card">
+        <div id="chatHeader" class="chat-header">Nessuna chat selezionata</div>
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="input-row">
+          <input id="chatInput" placeholder="Scrivi un messaggio..." />
+          <button id="btnSendMsg" class="btn accent">Invia</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="groups-row">
+      <div class="card">
+        <h3>Gruppi</h3>
+        <div class="input-row">
+          <input id="groupName" placeholder="Nome gruppo" />
+          <input id="groupMembers" placeholder="Codici (es. 02,03,44)" />
+          <button id="btnCreateGroup" class="btn primary">Invia inviti</button>
+        </div>
+
+        <h4>Inviti ricevuti</h4>
+        <div id="groupInvites" class="list"></div>
+      </div>
+
+      <div class="card">
+        <h3>I miei gruppi</h3>
+        <div id="myGroups" class="list"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="client.js"></script>
+</body>
+</html>
