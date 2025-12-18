@@ -5,203 +5,573 @@
   <title>SuryaFast – Mock Dashboard</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
+    :root {
+      --bg: #050510;
+      --card: rgba(12,15,32,0.96);
+      --border: rgba(255,255,255,0.10);
+      --text: #f5f5f7;
+      --muted: #9ea0b5;
+      --accent1: #6366f1;
+      --accent2: #a855f7;
+      --accent3: #0ea5e9;
+    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-      background: radial-gradient(circle at top left,#101524 0,#02030a 60%,#000 100%);
-      color: #f5f5f7;
       min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      background:
+        radial-gradient(1100px 650px at 78% 8%, rgba(99,102,241,0.28), transparent 60%),
+        radial-gradient(900px 520px at 12% 28%, rgba(168,85,247,0.22), transparent 62%),
+        radial-gradient(700px 500px at 50% 90%, rgba(14,165,233,0.10), transparent 55%),
+        #050510;
+      color: var(--text);
+      overflow-x: hidden;
     }
     .page {
-      max-width: 1100px;
+      max-width: 1180px;
       margin: 0 auto;
-      padding: 16px 12px 40px;
+      padding: 18px 16px 120px;
+      position: relative;
     }
-    .top-bar {
+
+    /* top bar */
+    .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 10px 12px;
+      padding: 12px 14px;
       border-radius: 18px;
       border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(5,8,20,0.92);
-      box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+      background: rgba(255,255,255,0.035);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
     .brand {
       display: flex;
       align-items: center;
       gap: 10px;
       font-weight: 800;
-      letter-spacing: 1px;
+      letter-spacing: 1.4px;
     }
     .logo {
-      width: 26px;
-      height: 26px;
-      border-radius: 11px;
-      background: linear-gradient(135deg,#6366f1,#a855f7,#0ea5e9);
-      box-shadow: 0 10px 26px rgba(99,102,241,0.45);
+      width: 30px;
+      height: 30px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.9), rgba(168,85,247,0.85), rgba(14,165,233,0.75));
+      box-shadow: 0 10px 30px rgba(99,102,241,0.25);
+      animation: floaty 4.2s ease-in-out infinite;
     }
     .pill {
-      font-size: 11px;
-      padding: 3px 9px;
+      font-size: 12px;
+      padding: 4px 10px;
       border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.05);
-      color: rgba(245,245,247,0.86);
-    }
-    .btn {
-      border-radius: 999px;
-      padding: 7px 13px;
-      border: 1px solid rgba(255,255,255,0.16);
-      background: rgba(255,255,255,0.07);
-      color: #fff;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg,#ffffff,#e5e7ff);
-      color: #050816;
-      font-weight: 600;
-    }
-    h1 {
-      margin: 18px 0 6px;
-      font-size: 30px;
-    }
-    .sub {
-      color: #9ea0b5;
-      font-size: 13px;
-      margin-bottom: 16px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 1.6fr 1fr;
-      gap: 14px;
-    }
-    .card {
-      border-radius: 18px;
+      background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(5,8,24,0.96);
-      padding: 12px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+    }
+    .pill.glow {
+      animation: glow 3.4s ease-in-out infinite;
     }
     .row {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
-    canvas {
+    .btn {
+      padding: 9px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.07);
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-primary {
+      border-color: rgba(255,255,255,0.18);
+      background: linear-gradient(135deg, #ffffff, #e5e7ff);
+      color: #050510;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 18px 0 8px;
+      font-size: 34px;
+      letter-spacing: -0.6px;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 14px;
+    }
+    .grid4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .card {
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(12,15,32,0.96);
+      padding: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    }
+    .card-soft {
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.025);
+      padding: 14px;
+    }
+
+    .price-main {
+      font-size: 28px;
+      font-weight: 900;
+    }
+    .chip-pct {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .chip-pct.pos { background: rgba(34,197,94,0.14); }
+    .chip-pct.neg { background: rgba(239,68,68,0.14); }
+
+    .chip-range {
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.90);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .chip-range.on {
+      background: rgba(255,255,255,0.16);
+      color: #fff;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .kpi-item {
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.03);
+      padding: 10px;
+      font-size: 12px;
+    }
+    .kpi-label { color: var(--muted); }
+    .kpi-value { font-weight: 900; font-size: 17px; }
+
+    #chart {
       width: 100%;
-      height: 220px;
+      height: 240px;
       display: block;
-      border-radius: 12px;
+      border-radius: 14px;
       background: radial-gradient(circle at top,#111629 0,#050816 60%,#000 100%);
     }
-    .price-main {
-      font-size: 26px;
-      font-weight: 800;
-    }
-    .chip {
-      font-size: 11px;
-      padding: 3px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(34,197,94,0.13);
-      color: #4ade80;
-    }
-    .tokens {
+
+    .token-list {
       display: grid;
-      gap: 6px;
-      margin-top: 8px;
+      gap: 7px;
+      margin-top: 10px;
     }
     .token-row {
-      padding: 8px 9px;
-      border-radius: 12px;
+      padding: 9px 9px;
+      border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.10);
       background: rgba(255,255,255,0.03);
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .token-row.active {
+      background: rgba(255,255,255,0.10);
+    }
+    .token-symbol { font-weight: 900; }
+    .token-sub { color: var(--muted); font-size: 12px; }
+    .token-chg {
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .token-chg.pos { color: #4ade80; }
+    .token-chg.neg { color: #f97373; }
+
+    .bot-card {
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.03);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 140px;
+    }
+    .bot-title { font-weight: 900; }
+    .bot-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    .bot-tag.live {
+      background: rgba(34,197,94,0.18);
+      border: 1px solid rgba(34,197,94,0.55);
+      color: rgba(34,197,94,0.95);
+    }
+    .bot-tag.beta {
+      background: rgba(234,179,8,0.20);
+      border: 1px solid rgba(234,179,8,0.55);
+      color: rgba(234,179,8,0.95);
+    }
+    .bot-desc {
+      font-size: 13px;
+      color: rgba(255,255,255,0.80);
+      margin-top: 6px;
+    }
+
+    /* dock bot in basso */
+    .dock {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 14px;
+      z-index: 40;
+    }
+    .dock-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(8,8,20,0.92);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.60);
+    }
+    .dock-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+    }
+    .dock-body { padding: 12px; }
+    .chat-box {
+      height: 40vh;
+      overflow: auto;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.025);
+      padding: 10px;
       font-size: 13px;
     }
-    .token-row span.symbol {
-      font-weight: 700;
+    .bubble-sys,
+    .bubble-user {
+      max-width: 88%;
+      padding: 9px 11px;
+      border-radius: 18px;
+      margin-bottom: 7px;
+      white-space: pre-wrap;
     }
-    .token-row span.chg {
-      font-size: 12px;
-      font-weight: 700;
+    .bubble-sys {
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.05);
     }
-    .token-row span.chg.pos { color: #4ade80; }
-    .token-row span.chg.neg { color: #f97373; }
+    .bubble-user {
+      margin-left: auto;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: linear-gradient(135deg,#ffffff,#e5e7ff);
+      color: #050510;
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .chat-input-row input {
+      flex: 1;
+      padding: 9px 11px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.28);
+      color: #fff;
+      outline: none;
+      font-size: 13px;
+    }
 
-    @media (max-width: 768px) {
-      .page {
-        padding: 12px 10px 32px;
-      }
-      .grid {
-        grid-template-columns: 1fr;
-      }
+    @keyframes floaty {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+      100% { transform: translateY(0); }
+    }
+    @keyframes glow {
+      0% { opacity: .55; }
+      50% { opacity: .95; }
+      100% { opacity: .55; }
+    }
+
+    @media (max-width: 980px) {
+      .grid2 { grid-template-columns: 1fr; }
+      .grid4 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width: 620px) {
+      .grid4 { grid-template-columns: 1fr; }
+      .page { padding-bottom: 150px; }
+      .chat-box { height: 45vh; }
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <div class="top-bar">
+    <div class="topbar">
       <div class="brand">
         <div class="logo"></div>
-        <div>SuryaFast</div>
-        <div class="pill">mock dashboard</div>
+        <div>Surya</div>
+        <div class="pill glow">mainnet</div>
+        <div class="pill" id="latencyPill">latency 40ms</div>
       </div>
       <div class="row">
-        <button class="btn" id="btnRefresh">Refresh dati</button>
-        <button class="btn btn-primary" onclick="window.location.href='index.html'">Torna a GhostChat</button>
+        <button class="btn" id="btnRefresh">Refresh</button>
+        <button class="btn" onclick="location.href='index.html'">GhostChat</button>
       </div>
     </div>
 
-    <h1>$SURYA Market</h1>
-    <div class="sub">Grafico e tabella sono finti (dati random) ma la UI è realistica.</div>
+    <h1>SuryaFast</h1>
+    <div class="sub">Dashboard operativa mock: grafico, movers e bot copy trading simulato.</div>
 
-    <div class="grid">
+    <div class="grid2">
       <div class="card">
-        <div class="row" style="justify-content: space-between; align-items:flex-end;">
+        <div class="row" style="justify-content:space-between;align-items:flex-start;">
           <div>
-            <div style="font-size:12px;color:#9ea0b5;">Token ufficiale</div>
-            <div style="font-weight:700;">SURYA / USD</div>
+            <div style="font-size:12px;color:var(--muted);">Token ufficiale</div>
+            <div style="font-weight:900;font-size:18px;">
+              SURYA <span style="color:var(--muted);font-weight:600;">/ USD</span>
+            </div>
             <div class="row" style="margin-top:6px;align-items:baseline;">
-              <div class="price-main" id="priceNow">$0.00</div>
-              <div class="chip" id="priceChg">+0.00%</div>
+              <div class="price-main" id="priceNow">$0.0000</div>
+              <div class="chip-pct pos" id="priceChg">+0.00%</div>
             </div>
           </div>
-          <div class="row">
-            <button class="btn" data-range="1H">1H</button>
-            <button class="btn" data-range="24H">24H</button>
-            <button class="btn" data-range="7D">7D</button>
+          <div class="row" id="rangeBtns">
+            <button class="chip-range on" data-range="1H">1H</button>
+            <button class="chip-range" data-range="24H">24H</button>
+            <button class="chip-range" data-range="7D">7D</button>
+            <button class="chip-range" data-range="30D">30D</button>
           </div>
         </div>
 
         <canvas id="chart"></canvas>
+
+        <div class="kpi-grid">
+          <div class="kpi-item">
+            <div class="kpi-label">Market Cap</div>
+            <div class="kpi-value" id="kpiMcap">$0</div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-label">Volume 24h</div>
+            <div class="kpi-value" id="kpiVol">$0</div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-label">Holders</div>
+            <div class="kpi-value" id="kpiHolders">0</div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-label">Health</div>
+            <div class="kpi-value">OK</div>
+          </div>
+        </div>
       </div>
 
       <div class="card">
-        <div style="font-size:13px;color:#9ea0b5;">Top movers (mock)</div>
-        <div class="tokens" id="tokens"></div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div>
+            <div style="font-size:12px;color:var(--muted);">Trend tokens</div>
+            <div style="font-weight:900;font-size:18px;">Top Movers</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">
+              Seleziona un token per cambiare il grafico.
+            </div>
+          </div>
+          <button class="btn" id="btnShuffle">Shuffle</button>
+        </div>
+
+        <div class="token-list" id="tokenList"></div>
+      </div>
+    </div>
+
+    <div class="grid4">
+      <div class="bot-card">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="bot-title">Surya Copy</div>
+            <div class="bot-tag live">LIVE</div>
+          </div>
+          <div class="bot-desc">
+            Copy trading su Pump.fun (solo simulazione).
+          </div>
+        </div>
+        <button class="btn-primary" id="openCopy">Open module</button>
+      </div>
+      <div class="bot-card">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="bot-title">Surya Monitor</div>
+            <div class="bot-tag live">LIVE</div>
+          </div>
+          <div class="bot-desc">Whale alerts, heatmap, filters (mock).</div>
+        </div>
+        <button class="btn-primary" onclick="openPlaceholder('monitor')">Open module</button>
+      </div>
+      <div class="bot-card">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="bot-title">Surya Launch</div>
+            <div class="bot-tag live">LIVE</div>
+          </div>
+          <div class="bot-desc">Token launch su Pump.fun (mock UI).</div>
+        </div>
+        <button class="btn-primary" onclick="openPlaceholder('launch')">Open module</button>
+      </div>
+      <div class="bot-card">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="bot-title">Surya Microbuys</div>
+            <div class="bot-tag beta">BETA</div>
+          </div>
+          <div class="bot-desc">Micro-DCA e auto accumulation (solo demo).</div>
+        </div>
+        <button class="btn-primary" onclick="openPlaceholder('microbuys')">Open module</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dock copy bot -->
+  <div class="dock" id="dock" style="display:none;">
+    <div class="dock-inner">
+      <div class="dock-header">
+        <div class="row">
+          <div style="width:22px;height:22px;border-radius:999px;background:linear-gradient(135deg,#6366f1,#a855f7,#0ea5e9);"></div>
+          <div style="font-weight:900;">Surya Copy</div>
+          <div class="pill" style="font-size:11px;">mock-only</div>
+        </div>
+        <button class="btn" onclick="closeDock()">Close</button>
+      </div>
+      <div class="dock-body">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">
+          Copy trading su wallet master. Tutto simulato, nessuna tx reale.
+        </div>
+        <div class="chat-box" id="copyChat"></div>
+        <div class="chat-input-row">
+          <input id="copyInput" placeholder="Incolla wallet, percentuale o comando START/STOP/STATUS…" />
+          <button class="btn-primary" id="copySend">Invia</button>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <button class="btn" id="btnStart">START</button>
+          <button class="btn" id="btnStop">STOP</button>
+          <button class="btn" id="btnStatus">STATUS</button>
+          <div style="margin-left:auto;font-size:12px;color:var(--muted);">
+            Stato: <span id="copyStateLabel">SETUP</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // --- dato finto + grafico lineare molto semplice ---
+    // ---- util ----
+    function fmtNum(n) {
+      n = Number(n);
+      if (!isFinite(n)) return "-";
+      if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(2)+"B";
+      if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(2)+"M";
+      if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(2)+"K";
+      if (Math.abs(n) < 1) return n.toFixed(6);
+      return n.toFixed(3);
+    }
+
+    // ---- dati mock token ----
+    let selectedSymbol = "SURYA";
+    let range = "1H";
+    let tokens = [];
+
+    function makeTokens() {
+      const baseData = [
+        ["SURYA","Surya Official",0.024],
+        ["NOVA","Nova Ray",0.009],
+        ["HELI","HeliStack",0.0046],
+        ["ORBI","Orbit Mesh",0.012],
+        ["KITE","Kite Signal",0.0011],
+        ["PULS","Pulse Index",0.017],
+        ["LUMA","Luma Swap",0.0068],
+        ["VORT","Vortex Flow",0.0029],
+      ];
+      tokens = baseData.map(([sym,name,base]) => {
+        const price = base*(0.85 + Math.random()*0.35);
+        const chg24 = (Math.random()-0.45)*22;
+        const mcap = 5_000_000 + Math.random()*220_000_000;
+        const vol = 250_000 + Math.random()*40_000_000;
+        const holders = 500 + Math.floor(Math.random()*85_000);
+        return {symbol:sym,name,price,chg24,mcap,vol,holders};
+      }).sort((a,b)=> (a.symbol==="SURYA"?-1:b.symbol==="SURYA"?1:b.mcap-a.mcap));
+    }
+
+    function renderTokenList() {
+      const list = document.getElementById("tokenList");
+      list.innerHTML = "";
+      tokens.slice(0,6).forEach(t => {
+        const row = document.createElement("div");
+        row.className = "token-row" + (t.symbol===selectedSymbol ? " active":"");
+        row.innerHTML = `
+          <div>
+            <div class="token-symbol">${t.symbol} <span class="token-sub">· ${t.name}</span></div>
+            <div class="token-sub">MC $${fmtNum(t.mcap)} · Vol $${fmtNum(t.vol)}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:900;">$${fmtNum(t.price)}</div>
+            <div class="token-chg ${t.chg24>=0?"pos":"neg"}">
+              ${t.chg24>=0?"+":""}${t.chg24.toFixed(2)}%
+            </div>
+          </div>
+        `;
+        row.onclick = () => {
+          selectedSymbol = t.symbol;
+          renderTokenList();
+          drawChart();
+          updateKpi();
+        };
+        list.appendChild(row);
+      });
+    }
+
+    function updateKpi() {
+      const surya = tokens.find(t=>t.symbol===selectedSymbol) || tokens[0];
+      document.getElementById("kpiMcap").textContent = "$"+fmtNum(surya.mcap);
+      document.getElementById("kpiVol").textContent = "$"+fmtNum(surya.vol);
+      document.getElementById("kpiHolders").textContent = fmtNum(surya.holders);
+    }
+
+    // ---- chart ----
     const canvas = document.getElementById("chart");
     const ctx = canvas.getContext("2d");
-    let range = "24H";
 
     function makeSeries(points, base) {
       const out = [];
       let v = base;
-      for (let i = 0; i < points; i++) {
-        const drift = (Math.random() - 0.5) * base * 0.015;
-        const shock = (Math.random() - 0.5) * base * 0.03;
+      for (let i=0;i<points;i++) {
+        const drift = (Math.random()-0.5)*base*0.015;
+        const shock = (Math.random()-0.5)*base*0.03;
         v = Math.max(0.000001, v + drift + shock);
         out.push(v);
       }
@@ -209,97 +579,252 @@
     }
 
     function drawChart() {
-      const base = 0.024;
-      const pts = range === "1H" ? 40 : range === "7D" ? 90 : 70;
+      const token = tokens.find(t=>t.symbol===selectedSymbol) || tokens[0];
+      const base = token ? token.price : 0.024;
+      const pts = range==="1H"?60:range==="24H"?90:range==="7D"?120:140;
       const data = makeSeries(pts, base);
 
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
       canvas.width = w * window.devicePixelRatio;
       canvas.height = h * window.devicePixelRatio;
-      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
-
-      ctx.clearRect(0, 0, w, h);
+      ctx.setTransform(window.devicePixelRatio,0,0,window.devicePixelRatio,0,0);
+      ctx.clearRect(0,0,w,h);
 
       const minV = Math.min(...data);
       const maxV = Math.max(...data);
       const padX = 12;
       const padY = 12;
-      const innerW = w - padX * 2;
-      const innerH = h - padY * 2;
+      const innerW = w - padX*2;
+      const innerH = h - padY*2;
 
       ctx.strokeStyle = "rgba(255,255,255,0.08)";
       ctx.lineWidth = 1;
-      for (let i = 0; i <= 4; i++) {
-        const y = padY + (innerH * i) / 4;
+      for (let i=0;i<=4;i++) {
+        const y = padY + innerH*i/4;
         ctx.beginPath();
-        ctx.moveTo(padX, y);
-        ctx.lineTo(w - padX, y);
+        ctx.moveTo(padX,y);
+        ctx.lineTo(w-padX,y);
         ctx.stroke();
       }
 
-      const grad = ctx.createLinearGradient(0, 0, w, 0);
-      grad.addColorStop(0, "rgba(14,165,233,0.95)");
-      grad.addColorStop(1, "rgba(168,85,247,0.95)");
-      ctx.lineWidth = 2;
+      const grad = ctx.createLinearGradient(0,0,w,0);
+      grad.addColorStop(0,"rgba(14,165,233,0.95)");
+      grad.addColorStop(0.55,"rgba(99,102,241,0.95)");
+      grad.addColorStop(1,"rgba(168,85,247,0.95)");
 
       ctx.beginPath();
-      data.forEach((v, i) => {
-        const x = padX + (innerW * i) / (pts - 1);
-        const y = padY + innerH * (1 - (v - minV) / (maxV - minV));
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+      data.forEach((v,i)=>{
+        const x = padX + innerW*i/(pts-1);
+        const y = padY + innerH*(1-(v-minV)/(maxV-minV));
+        if(i===0) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
       });
+      ctx.lineWidth = 2.2;
       ctx.strokeStyle = grad;
       ctx.stroke();
 
-      const last = data[data.length - 1];
-      const prev = data[data.length - 2] || last;
-      const chg = ((last - prev) / prev) * 100;
-      document.getElementById("priceNow").textContent = "$" + last.toFixed(4);
+      const last = data[data.length-1];
+      const prev = data[data.length-2] || last;
+      const chg = ((last-prev)/prev)*100;
+      document.getElementById("priceNow").textContent = "$"+last.toFixed(4);
       const chip = document.getElementById("priceChg");
-      chip.textContent = (chg >= 0 ? "+" : "") + chg.toFixed(2) + "%";
+      chip.textContent = (chg>=0?"+":"")+chg.toFixed(2)+"%";
+      chip.classList.toggle("pos", chg>=0);
+      chip.classList.toggle("neg", chg<0);
     }
 
-    function renderTokens() {
-      const el = document.getElementById("tokens");
-      el.innerHTML = "";
-      const symbols = ["SURYA","NOVA","HELI","ORBI","KITE","PULS"];
-      symbols.forEach((s) => {
-        const price = (0.002 + Math.random() * 0.03).toFixed(4);
-        const chg = (Math.random() * 20 - 10).toFixed(2);
-        const row = document.createElement("div");
-        row.className = "token-row";
-        row.innerHTML = `
-          <div><span class="symbol">${s}</span> · $${price}</div>
-          <span class="chg ${chg >= 0 ? "pos" : "neg"}">
-            ${chg >= 0 ? "+" : ""}${chg}%
-          </span>
-        `;
-        el.appendChild(row);
-      });
+    // ---- copy bot dock ----
+    let copyMode = "IDLE"; // IDLE, ASK_WALLET, ASK_PERCENT, READY, RUNNING
+    let copyWallet = "";
+    let copyPercent = 0;
+    let copyTimer = null;
+
+    function openDock() {
+      document.getElementById("dock").style.display = "block";
+      const chat = document.getElementById("copyChat");
+      chat.innerHTML = "";
+      copyPushSys(`SURYA COPY
+
+Setup:
+1) Wallet MASTER
+2) Percentuale di copia (1–100)
+
+Inizia incollando il wallet master.`);
+      copyMode = "ASK_WALLET";
+      updateCopyLabel();
+    }
+    function closeDock() {
+      document.getElementById("dock").style.display = "none";
+      if (copyTimer) clearInterval(copyTimer);
+      copyTimer = null;
+      copyMode = "IDLE";
+    }
+    function copyPushSys(text) {
+      const box = document.getElementById("copyChat");
+      const div = document.createElement("div");
+      div.className = "bubble-sys";
+      div.textContent = text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+    function copyPushUser(text) {
+      const box = document.getElementById("copyChat");
+      const div = document.createElement("div");
+      div.className = "bubble-user";
+      div.textContent = text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+    function updateCopyLabel() {
+      const lbl = document.getElementById("copyStateLabel");
+      if (copyMode==="RUNNING") lbl.textContent = "RUNNING";
+      else if (copyMode==="READY") lbl.textContent = "READY";
+      else if (copyMode==="ASK_WALLET" || copyMode==="ASK_PERCENT") lbl.textContent = "SETUP";
+      else lbl.textContent = "IDLE";
     }
 
-    document.querySelectorAll("[data-range]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        range = btn.getAttribute("data-range");
-        drawChart();
-      });
+    function handleCopyInput() {
+      const inp = document.getElementById("copyInput");
+      const t = inp.value.trim();
+      if (!t) return;
+      copyPushUser(t);
+
+      if (copyMode==="ASK_WALLET") {
+        copyWallet = t;
+        copyMode = "ASK_PERCENT";
+        copyPushSys("Wallet master salvato. Invia la percentuale (1–100).");
+        inp.value = "";
+        updateCopyLabel();
+        return;
+      }
+      if (copyMode==="ASK_PERCENT") {
+        const pct = Number(t);
+        if (!(pct>0 && pct<=100)) {
+          copyPushSys("Percentuale non valida. Inserisci un numero tra 1 e 100.");
+          inp.value = "";
+          return;
+        }
+        copyPercent = pct;
+        copyMode = "READY";
+        copyPushSys(`Setup completato.
+Wallet: ${copyWallet}
+%: ${copyPercent}%
+
+Premi START per iniziare la simulazione.`);
+        inp.value = "";
+        updateCopyLabel();
+        return;
+      }
+
+      // comandi
+      const cmd = t.toUpperCase();
+      if (cmd==="START") { doCopyStart(); inp.value=""; return; }
+      if (cmd==="STOP") { doCopyStop(); inp.value=""; return; }
+      if (cmd==="STATUS") { doCopyStatus(); inp.value=""; return; }
+
+      copyPushSys("Comando non valido. Usa START / STOP / STATUS.");
+      inp.value = "";
+    }
+
+    function doCopyStart() {
+      if (copyMode!=="READY" && copyMode!=="RUNNING") {
+        copyPushSys("Completa prima il setup (wallet + percentuale).");
+        return;
+      }
+      copyMode = "RUNNING";
+      updateCopyLabel();
+      copyPushSys("Baseline 5s…");
+      setTimeout(()=> copyPushSys("Baseline completata. Monitor attivo."), 5000);
+
+      if (copyTimer) clearInterval(copyTimer);
+      copyTimer = setInterval(()=>{
+        const choices = ["BUY","SELL","SKIP","PARSE_FAIL"];
+        const c = choices[Math.floor(Math.random()*choices.length)];
+        const mint = Math.random().toString(36).slice(2,10).toUpperCase();
+        const sol = 0.03 + Math.random()*0.25;
+        const copyAmt = (sol*copyPercent)/100;
+        if (c==="SKIP") {
+          copyPushSys("Nessun trigger. Continuo a monitorare…");
+          return;
+        }
+        if (c==="PARSE_FAIL") {
+          copyPushSys("Parsing fallito su tx. Retry…");
+          return;
+        }
+        copyPushSys(`Trigger: MASTER ${c} ${sol.toFixed(4)} SOL → Copy ${copyAmt.toFixed(4)} SOL | ${mint}`);
+        copyPushSys(`Trade submitted. Sig: ${Math.random().toString(36).slice(2)}…`);
+      },2600);
+    }
+
+    function doCopyStop() {
+      if (copyTimer) clearInterval(copyTimer);
+      copyTimer = null;
+      if (copyMode==="RUNNING") copyMode = "READY";
+      copyPushSys("Copy trading fermato.");
+      updateCopyLabel();
+    }
+
+    function doCopyStatus() {
+      if (copyMode==="READY" || copyMode==="RUNNING") {
+        copyPushSys(`STATUS
+Attivo: ${copyMode==="RUNNING"?"SI":"NO"}
+Wallet: ${copyWallet || "-"}
+%: ${copyPercent || 0}%
+Health: OK
+Latency: ${(35+Math.random()*45).toFixed(0)}ms`);
+      } else {
+        copyPushSys("STATUS: setup non completato.");
+      }
+    }
+
+    function openPlaceholder(name) {
+      alert("Modulo "+name+" è solo un placeholder in questa demo.");
+    }
+
+    // ---- init ----
+    document.getElementById("btnRefresh").onclick = () => {
+      makeTokens();
+      renderTokenList();
+      updateKpi();
+      drawChart();
+      document.getElementById("latencyPill").textContent =
+        "latency "+(25+Math.floor(Math.random()*30))+"ms";
+    };
+    document.getElementById("btnShuffle").onclick = () => {
+      makeTokens();
+      renderTokenList();
+      updateKpi();
+      drawChart();
+    };
+
+    document.getElementById("rangeBtns").addEventListener("click", (e)=>{
+      const btn = e.target.closest("[data-range]");
+      if (!btn) return;
+      range = btn.getAttribute("data-range");
+      document.querySelectorAll(".chip-range").forEach(b=>b.classList.remove("on"));
+      btn.classList.add("on");
+      drawChart();
     });
 
-    document.getElementById("btnRefresh").addEventListener("click", () => {
-      drawChart();
-      renderTokens();
+    document.getElementById("openCopy").onclick = openDock;
+    document.getElementById("copySend").onclick = handleCopyInput;
+    document.getElementById("copyInput").addEventListener("keydown",(e)=>{
+      if (e.key==="Enter") handleCopyInput();
     });
+    document.getElementById("btnStart").onclick = ()=>doCopyStart();
+    document.getElementById("btnStop").onclick = ()=>doCopyStop();
+    document.getElementById("btnStatus").onclick = ()=>doCopyStatus();
 
-    window.addEventListener("load", () => {
+    window.addEventListener("load", ()=>{
+      makeTokens();
+      renderTokenList();
+      updateKpi();
       drawChart();
-      renderTokens();
+      document.getElementById("latencyPill").textContent =
+        "latency "+(25+Math.floor(Math.random()*30))+"ms";
     });
-
-    window.addEventListener("resize", () => {
-      drawChart();
-    });
+    window.addEventListener("resize", drawChart);
   </script>
 </body>
 </html>
