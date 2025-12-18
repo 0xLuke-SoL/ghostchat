@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BuiltByLuca (0xLuke) Token</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050811;
+      --card: #101524;
+      --accent: #5b5fff;
+      --primary: #00b36b;
+      --text: #f5f5f7;
+      --muted: #9ea0b5;
+      --border: #20263a;
+      --radius: 16px;
+      --shadow: 0 18px 45px rgba(0,0,0,0.6);
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: radial-gradient(circle at top left, #101524 0, #02030a 60%, #000 100%);
+      color: var(--text);
+    }
+    .page {
+      max-width: 980px;
+      margin: 24px auto 40px;
+      padding: 0 16px 32px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .logo {
+      width: 60px;
+      height: 60px;
+      border-radius: 20px;
+      background: radial-gradient(circle, #42f5ff 0, #0099ff 40%, #050811 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      color: #050811;
+      box-shadow: var(--shadow);
+    }
+    h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: rgba(16,21,36,0.96);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 16px 18px;
+    }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+    p {
+      margin: 0 0 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    ul {
+      margin: 0 0 10px 18px;
+      padding: 0;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    li + li {
+      margin-top: 4px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      border: none;
+      cursor: pointer;
+      color: #fff;
+      text-decoration: none;
+      background: var(--accent);
+      transition: all 0.15s ease;
+    }
+    .btn.secondary {
+      background: #181e33;
+      color: var(--muted);
+    }
+    .btn:hover {
+      filter: brightness(1.07);
+      transform: translateY(-1px);
+    }
+    .btn:active {
+      transform: translateY(0);
+      filter: brightness(0.94);
+    }
+    .code-box {
+      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #050811;
+      border: 1px solid var(--border);
+      word-break: break-all;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .chart-card {
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .chart-placeholder {
+      flex: 1;
+      border-radius: 12px;
+      border: 1px dashed var(--border);
+      background: #050811;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 12px;
+    }
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="logo">L</div>
+      <div>
+        <h1>BuiltByLuca (0xLuke)</h1>
+        <p>A community-driven token for builders, automation and anonymous tools on Solana.</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div class="badge">About</div>
+        <h2>What is BuiltByLuca?</h2>
+        <p>
+          BuiltByLuca (ticker <strong>0xLuke</strong>) is a community-focused token created by an independent builder
+          obsessed with automation, bots and privacy-friendly tools.
+          It is designed to experiment with new products, reward early supporters and unlock access to the BuiltByLuca ecosystem.
+        </p>
+        <p>
+          The token runs on the <strong>Solana</strong> network and is initially launched via Pump.fun,
+          making it easy for anyone to join directly from a browser or mobile wallet.
+        </p>
+
+        <div class="badge" style="margin-top: 10px;">Token address (Pump)</div>
+        <div class="code-box">
+          CixPnFcNTChvyRkw1QfhDLX2YxYHm6mWgVtw7z6Upump
+        </div>
+        <p class="note">Always double-check this address before buying or sending tokens.</p>
+      </section>
+
+      <section class="card chart-card">
+        <div class="badge">Market</div>
+        <h2>Price & chart</h2>
+        <div class="chart-placeholder">
+          Live chart widget will be embedded here as soon as the pair is indexed on Dexscreener.
+          For now, you can track the coin directly on Pump.fun.
+        </div>
+        <p class="note">
+          Once the Dexscreener URL is available, this block can be replaced with an iframe
+          showing the live chart and price action.
+        </p>
+      </section>
+    </div>
+
+    <section class="card" style="margin-bottom: 16px;">
+      <div class="badge">How to buy</div>
+      <h2>How to buy 0xLuke</h2>
+      <ul>
+        <li>Install a Solana wallet (Phantom, Solflare, Backpack or similar) and fund it with SOL.</li>
+        <li>Open the official Pump.fun page for BuiltByLuca using the button below.</li>
+        <li>Connect your wallet and verify the token address matches the one shown on this page.</li>
+        <li>Choose how much SOL you want to swap, confirm the transaction and wait for it to settle.</li>
+        <li>After trading starts on DEXes, you will also be able to buy and sell through aggregators and Dexscreener links.</li>
+      </ul>
+      <div class="btn-row">
+        <a class="btn" href="https://pump.fun/coin/CixPnFcNTChvyRkw1QfhDLX2YxYHm6mWgVtw7z6Upump" target="_blank" rel="noopener noreferrer">
+          🚀 Buy on Pump.fun
+        </a>
+      </div>
+      <p class="note">
+        This is an experimental community token. Always do your own research and never risk more than you can afford to lose.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="badge">Links</div>
+      <h2>Official links</h2>
+      <p class="muted">Keep this page as the reference hub for the BuiltByLuca token.</p>
+      <div class="btn-row">
+        <a class="btn secondary" href="https://pump.fun/coin/CixPnFcNTChvyRkw1QfhDLX2YxYHm6mWgVtw7z6Upump" target="_blank" rel="noopener noreferrer">
+          Pump.fun listing
+        </a>
+        <!-- Quando avrai il link Dexscreener, sostituisci # con l'URL -->
+        <a class="btn secondary" href="#" target="_blank" rel="noopener noreferrer">
+          Dexscreener (soon)
+        </a>
+        <!-- Quando hai l'URL Solscan / explorer, sostituisci # -->
+        <a class="btn secondary" href="#" target="_blank" rel="noopener noreferrer">
+          Solscan / Explorer
+        </a>
+        <!-- Link al tuo sito principale -->
+        <a class="btn secondary" href="https://ghostchat-695m.onrender.com" target="_blank" rel="noopener noreferrer">
+          GhostChat
+        </a>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
