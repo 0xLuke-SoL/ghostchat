@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SuryaFast – Mock Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      background: radial-gradient(circle at top left,#101524 0,#02030a 60%,#000 100%);
+      color: #f5f5f7;
+      min-height: 100vh;
+    }
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 12px 40px;
+    }
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(5,8,20,0.92);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+    .logo {
+      width: 26px;
+      height: 26px;
+      border-radius: 11px;
+      background: linear-gradient(135deg,#6366f1,#a855f7,#0ea5e9);
+      box-shadow: 0 10px 26px rgba(99,102,241,0.45);
+    }
+    .pill {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: rgba(245,245,247,0.86);
+    }
+    .btn {
+      border-radius: 999px;
+      padding: 7px 13px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.07);
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg,#ffffff,#e5e7ff);
+      color: #050816;
+      font-weight: 600;
+    }
+    h1 {
+      margin: 18px 0 6px;
+      font-size: 30px;
+    }
+    .sub {
+      color: #9ea0b5;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 14px;
+    }
+    .card {
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(5,8,24,0.96);
+      padding: 12px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    canvas {
+      width: 100%;
+      height: 220px;
+      display: block;
+      border-radius: 12px;
+      background: radial-gradient(circle at top,#111629 0,#050816 60%,#000 100%);
+    }
+    .price-main {
+      font-size: 26px;
+      font-weight: 800;
+    }
+    .chip {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(34,197,94,0.13);
+      color: #4ade80;
+    }
+    .tokens {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .token-row {
+      padding: 8px 9px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.03);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+    .token-row span.symbol {
+      font-weight: 700;
+    }
+    .token-row span.chg {
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .token-row span.chg.pos { color: #4ade80; }
+    .token-row span.chg.neg { color: #f97373; }
+
+    @media (max-width: 768px) {
+      .page {
+        padding: 12px 10px 32px;
+      }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="top-bar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>SuryaFast</div>
+        <div class="pill">mock dashboard</div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnRefresh">Refresh dati</button>
+        <button class="btn btn-primary" onclick="window.location.href='index.html'">Torna a GhostChat</button>
+      </div>
+    </div>
+
+    <h1>$SURYA Market</h1>
+    <div class="sub">Grafico e tabella sono finti (dati random) ma la UI è realistica.</div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="row" style="justify-content: space-between; align-items:flex-end;">
+          <div>
+            <div style="font-size:12px;color:#9ea0b5;">Token ufficiale</div>
+            <div style="font-weight:700;">SURYA / USD</div>
+            <div class="row" style="margin-top:6px;align-items:baseline;">
+              <div class="price-main" id="priceNow">$0.00</div>
+              <div class="chip" id="priceChg">+0.00%</div>
+            </div>
+          </div>
+          <div class="row">
+            <button class="btn" data-range="1H">1H</button>
+            <button class="btn" data-range="24H">24H</button>
+            <button class="btn" data-range="7D">7D</button>
+          </div>
+        </div>
+
+        <canvas id="chart"></canvas>
+      </div>
+
+      <div class="card">
+        <div style="font-size:13px;color:#9ea0b5;">Top movers (mock)</div>
+        <div class="tokens" id="tokens"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- dato finto + grafico lineare molto semplice ---
+    const canvas = document.getElementById("chart");
+    const ctx = canvas.getContext("2d");
+    let range = "24H";
+
+    function makeSeries(points, base) {
+      const out = [];
+      let v = base;
+      for (let i = 0; i < points; i++) {
+        const drift = (Math.random() - 0.5) * base * 0.015;
+        const shock = (Math.random() - 0.5) * base * 0.03;
+        v = Math.max(0.000001, v + drift + shock);
+        out.push(v);
+      }
+      return out;
+    }
+
+    function drawChart() {
+      const base = 0.024;
+      const pts = range === "1H" ? 40 : range === "7D" ? 90 : 70;
+      const data = makeSeries(pts, base);
+
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      canvas.width = w * window.devicePixelRatio;
+      canvas.height = h * window.devicePixelRatio;
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+
+      ctx.clearRect(0, 0, w, h);
+
+      const minV = Math.min(...data);
+      const maxV = Math.max(...data);
+      const padX = 12;
+      const padY = 12;
+      const innerW = w - padX * 2;
+      const innerH = h - padY * 2;
+
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = padY + (innerH * i) / 4;
+        ctx.beginPath();
+        ctx.moveTo(padX, y);
+        ctx.lineTo(w - padX, y);
+        ctx.stroke();
+      }
+
+      const grad = ctx.createLinearGradient(0, 0, w, 0);
+      grad.addColorStop(0, "rgba(14,165,233,0.95)");
+      grad.addColorStop(1, "rgba(168,85,247,0.95)");
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      data.forEach((v, i) => {
+        const x = padX + (innerW * i) / (pts - 1);
+        const y = padY + innerH * (1 - (v - minV) / (maxV - minV));
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = grad;
+      ctx.stroke();
+
+      const last = data[data.length - 1];
+      const prev = data[data.length - 2] || last;
+      const chg = ((last - prev) / prev) * 100;
+      document.getElementById("priceNow").textContent = "$" + last.toFixed(4);
+      const chip = document.getElementById("priceChg");
+      chip.textContent = (chg >= 0 ? "+" : "") + chg.toFixed(2) + "%";
+    }
+
+    function renderTokens() {
+      const el = document.getElementById("tokens");
+      el.innerHTML = "";
+      const symbols = ["SURYA","NOVA","HELI","ORBI","KITE","PULS"];
+      symbols.forEach((s) => {
+        const price = (0.002 + Math.random() * 0.03).toFixed(4);
+        const chg = (Math.random() * 20 - 10).toFixed(2);
+        const row = document.createElement("div");
+        row.className = "token-row";
+        row.innerHTML = `
+          <div><span class="symbol">${s}</span> · $${price}</div>
+          <span class="chg ${chg >= 0 ? "pos" : "neg"}">
+            ${chg >= 0 ? "+" : ""}${chg}%
+          </span>
+        `;
+        el.appendChild(row);
+      });
+    }
+
+    document.querySelectorAll("[data-range]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        range = btn.getAttribute("data-range");
+        drawChart();
+      });
+    });
+
+    document.getElementById("btnRefresh").addEventListener("click", () => {
+      drawChart();
+      renderTokens();
+    });
+
+    window.addEventListener("load", () => {
+      drawChart();
+      renderTokens();
+    });
+
+    window.addEventListener("resize", () => {
+      drawChart();
+    });
+  </script>
+</body>
+</html>
