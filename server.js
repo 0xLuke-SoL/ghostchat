@@ -5,23 +5,28 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 
+
 // === MEMORIA (si azzera a ogni riavvio) ===
 let seq = 1;
 const users = new Map();   // code -> { pin, token, ws }
 const pairs = new Map();   // code -> Set(codes)
 const groups = new Map();  // id -> { id, name, creator, members:Set, pending:Set, closed:boolean }
 
+
 const nextCode = () => (seq < 10 ? `0${seq++}` : String(seq++));
 const randPin = () => String(Math.floor(1000 + Math.random() * 9000));
 const mkToken = () => crypto.randomBytes(16).toString('hex');
+
 
 // === EXPRESS + STATIC FRONTEND ===
 const app = express();
 app.use(express.json());
 
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, 'frontend');
 app.use(express.static(publicDir));
+
 
 // Registrazione: genera CODE + PIN
 app.post('/api/register', (req, res) => {
@@ -31,6 +36,7 @@ app.post('/api/register', (req, res) => {
   console.log('REGISTER', code, pin);
   res.json({ code, pin });
 });
+
 
 // Login: verifica CODE + PIN e genera token
 app.post('/api/login', (req, res) => {
@@ -44,9 +50,11 @@ app.post('/api/login', (req, res) => {
   res.json({ token: u.token });
 });
 
+
 // === HTTP + WEBSOCKET ===
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
+
 
 function codeFromToken(token) {
   for (const [code, u] of users.entries()) {
@@ -54,6 +62,7 @@ function codeFromToken(token) {
   }
   return null;
 }
+
 
 wss.on('connection', (ws, req) => {
   const url = new URL(req.url, 'http://x');
@@ -106,6 +115,24 @@ wss.on('connection', (ws, req) => {
         ts: Date.now()
       };
       users.get(msg.to)?.ws?.send(JSON.stringify(payload));
+      ws.send(JSON.stringify(payload));
+
+    // === NUOVO: MESSAGGI VOCALI 1:1 ===
+    } else if (msg.type === 'voice_msg') {
+      // consenti solo se i due utenti sono già in pair
+      if (!pairs.get(code)?.has(msg.to)) return;
+
+      const payload = {
+        type: 'voice_msg',
+        from: code,
+        to: msg.to,
+        audio: msg.audio, // data URL / Base64
+        ts: Date.now()
+      };
+
+      // inoltra al destinatario
+      users.get(msg.to)?.ws?.send(JSON.stringify(payload));
+      // opzionale: rimanda anche al mittente per visualizzarlo nella sua chat
       ws.send(JSON.stringify(payload));
     }
 
@@ -228,6 +255,7 @@ wss.on('connection', (ws, req) => {
     console.log('WS DISCONNECT', code);
   });
 });
+
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {

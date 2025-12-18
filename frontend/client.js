@@ -16,6 +16,16 @@ const wsStatusEl = document.getElementById('wsStatus');
 const chatInputEl = document.getElementById('chatInput');
 const btnSendMsg = document.getElementById('btnSendMsg');
 
+// NUOVO: elementi per i messaggi vocali
+const btnRecordVoice = document.getElementById('btnRecordVoice');
+const recordStatusEl = document.getElementById('recordStatus');
+
+// stato registrazione vocale
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let recordTimeout = null;
+
 // small toast for status messages
 let toastTimeout = null;
 function showToast(text) {
@@ -198,6 +208,15 @@ function handleWS(msg) {
       text: msg.text,
       ts: msg.ts
     });
+
+  // ===== NUOVO: MESSAGGI VOCALI 1:1 =====
+  } else if (msg.type === 'voice_msg') {
+    addVoiceMessageBubble({
+      from: msg.from,
+      isMe: msg.from === myCode,
+      audio: msg.audio,
+      ts: msg.ts
+    });
   }
 
   // GROUPS
@@ -256,6 +275,9 @@ chatInputEl.addEventListener('keydown', (e) => {
     sendCurrentMessage();
   }
 });
+
+// NUOVO: bottone per il vocale
+btnRecordVoice.addEventListener('click', toggleVoiceRecording);
 
 function sendCurrentMessage() {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -327,7 +349,7 @@ function renderOrUpdateGroup(groupLike) {
   lbl.textContent = groupLike.name ? `${groupLike.name}` : `Group ${id}`;
 }
 
-// Chat bubbles
+// Chat bubbles (testo)
 function addMessageBubble({ from, isMe, text, ts }) {
   const d = new Date(ts || Date.now());
   const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
@@ -344,8 +366,132 @@ function addMessageBubble({ from, isMe, text, ts }) {
   chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
+// NUOVO: chat bubble per vocale
+function addVoiceMessageBubble({ from, isMe, audio, ts }) {
+  const d = new Date(ts || Date.now());
+  const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+  const el = document.createElement('div');
+  el.className = 'msg' + (isMe ? ' me' : '');
+  el.innerHTML = `
+    <div class="msg-meta">${isMe ? 'You' : from} · ${time}</div>
+  `;
+
+  const audioEl = document.createElement('audio');
+  audioEl.controls = true;
+  audioEl.src = audio; // data URL base64 [web:254][web:257]
+
+  el.appendChild(audioEl);
+  chatMessagesEl.appendChild(el);
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+}
+
 function clearMessages() {
   chatMessagesEl.innerHTML = '';
+}
+
+// ===== LOGICA MESSAGGI VOCALI =====
+async function toggleVoiceRecording() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    alert('Not connected');
+    return;
+  }
+  if (currentChat.type !== 'direct') {
+    alert('Select a 1:1 chat to send voice messages');
+    return;
+  }
+
+  if (!isRecording) {
+    // start recording
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); // [web:195][web:193]
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream); // [web:202]
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunks.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        clearTimeout(recordTimeout);
+        recordStatusEl.textContent = '';
+
+        if (stream) {
+          stream.getTracks().forEach(t => t.stop());
+        }
+
+        if (audioChunks.length === 0) {
+          resetRecordingState();
+          return;
+        }
+
+        const blob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' }); // [web:202][web:256]
+        const base64 = await blobToBase64(blob);
+        const audioDataUrl = `data:audio/webm;codecs=opus;base64,${base64}`;
+        sendVoiceMessage(audioDataUrl);
+
+        resetRecordingState();
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      btnRecordVoice.textContent = '⏹';
+      recordStatusEl.textContent = 'Registrazione... (max 30s)';
+
+      // stop automatico dopo 30 secondi
+      recordTimeout = setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+        }
+      }, 30000);
+    } catch (err) {
+      console.error('getUserMedia error', err);
+      recordStatusEl.textContent = 'Microfono non disponibile.';
+      resetRecordingState();
+    }
+  } else {
+    // stop manuale
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+    }
+  }
+}
+
+function resetRecordingState() {
+  isRecording = false;
+  mediaRecorder = null;
+  audioChunks = [];
+  btnRecordVoice.textContent = '🎙';
+  if (recordTimeout) {
+    clearTimeout(recordTimeout);
+    recordTimeout = null;
+  }
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader(); // [web:199]
+    reader.onloadend = () => {
+      const dataUrl = reader.result; // data:audio/...;base64,AAA...
+      const base64 = dataUrl.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob); // [web:254]
+  });
+}
+
+function sendVoiceMessage(audioDataUrl) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  if (currentChat.type !== 'direct' || !currentChat.id) return;
+
+  ws.send(JSON.stringify({
+    type: 'voice_msg',
+    to: currentChat.id,
+    audio: audioDataUrl
+  }));
 }
 
 // ===== AUTO‑LOGIN ALL’APERTURA =====
