@@ -9,6 +9,9 @@ let currentChat = { type: null, id: null };
 // mappa delle chat 1:1: code -> { unread: number }
 const directChats = new Map();
 
+// memoria messaggi per chat: key = "direct:02" | "group:g_xxx"
+const messagesByChat = new Map();
+
 // DOM
 const incomingRequestsEl = document.getElementById('incomingRequests');
 const groupInvitesEl = document.getElementById('groupInvites');
@@ -216,6 +219,17 @@ function connectWS() {
   };
 }
 
+// helper chiave mappa messaggi
+function chatKey(type, id) {
+  return `${type}:${id}`;
+}
+function pushMessageToStore(type, id, message) {
+  const key = chatKey(type, id);
+  const arr = messagesByChat.get(key) || [];
+  arr.push(message);
+  messagesByChat.set(key, arr);
+}
+
 // ===== HANDLER MESSAGGI WS =====
 function handleWS(msg) {
   if (msg.type === 'hello') {
@@ -255,25 +269,28 @@ function handleWS(msg) {
   } else if (msg.type === 'pair_decline') {
     alert(`Your request to ${msg.from} was declined`);
   } else if (msg.type === 'direct_msg') {
-    addOrUpdateDirectChat(msg.from === myCode ? msg.to : msg.from);
+    const other = msg.from === myCode ? msg.to : msg.from;
+    addOrUpdateDirectChat(other);
+
+    // salva sempre in memoria
+    pushMessageToStore('direct', other, {
+      kind: 'text',
+      from: msg.from,
+      isMe: msg.from === myCode,
+      text: msg.text,
+      ts: msg.ts
+    });
+
     const isCurrent =
-      currentChat.type === 'direct' &&
-      (currentChat.id === msg.from || currentChat.id === msg.to);
+      currentChat.type === 'direct' && currentChat.id === other;
 
     if (!isCurrent) {
-      // incrementa unread sulla chat corrispondente
-      const other = msg.from === myCode ? msg.to : msg.from;
       const chatInfo = directChats.get(other) || { unread: 0 };
       chatInfo.unread = (chatInfo.unread || 0) + 1;
       directChats.set(other, chatInfo);
       renderChatList();
       showToast(`Nuovo messaggio da ${other}`);
-    }
-
-    if (
-      currentChat.type === 'direct' &&
-      (currentChat.id === msg.from || currentChat.id === msg.to)
-    ) {
+    } else {
       addMessageBubble({
         from: msg.from,
         isMe: msg.from === myCode,
@@ -288,6 +305,14 @@ function handleWS(msg) {
     const other = msg.from === myCode ? msg.to : msg.from;
     addOrUpdateDirectChat(other);
 
+    pushMessageToStore('direct', other, {
+      kind: 'voice',
+      from: msg.from,
+      isMe: msg.from === myCode,
+      audio: msg.audio,
+      ts: msg.ts
+    });
+
     const isCurrent =
       currentChat.type === 'direct' && currentChat.id === other;
 
@@ -297,9 +322,7 @@ function handleWS(msg) {
       directChats.set(other, chatInfo);
       renderChatList();
       showToast(`Nuovo vocale da ${other}`);
-    }
-
-    if (currentChat.type === 'direct' && currentChat.id === other) {
+    } else {
       addVoiceMessageBubble({
         from: msg.from,
         isMe: msg.from === myCode,
@@ -332,6 +355,15 @@ function handleWS(msg) {
       pending: msg.pending
     });
   } else if (msg.type === 'group_msg') {
+    // salva messaggio del gruppo
+    pushMessageToStore('group', msg.groupId, {
+      kind: 'text',
+      from: msg.from,
+      isMe: msg.from === myCode,
+      text: msg.text,
+      ts: msg.ts
+    });
+
     if (currentChat.type === 'group' && currentChat.id === msg.groupId) {
       addMessageBubble({
         from: msg.from,
@@ -386,12 +418,42 @@ function sendCurrentMessage() {
       to: currentChat.id,
       text
     }));
+
+    // salva subito anche localmente
+    pushMessageToStore('direct', currentChat.id, {
+      kind: 'text',
+      from: myCode,
+      isMe: true,
+      text,
+      ts: Date.now()
+    });
+    addMessageBubble({
+      from: myCode,
+      isMe: true,
+      text,
+      ts: Date.now()
+    });
+
   } else if (currentChat.type === 'group') {
     ws.send(JSON.stringify({
       type: 'group_msg',
       groupId: currentChat.id,
       text
     }));
+
+    pushMessageToStore('group', currentChat.id, {
+      kind: 'text',
+      from: myCode,
+      isMe: true,
+      text,
+      ts: Date.now()
+    });
+    addMessageBubble({
+      from: myCode,
+      isMe: true,
+      text,
+      ts: Date.now()
+    });
   }
 }
 
@@ -424,7 +486,6 @@ function renderChatList() {
     codeSpan.textContent = code;
 
     left.appendChild(codeSpan);
-
     item.appendChild(left);
 
     if (info.unread && info.unread > 0) {
@@ -441,6 +502,30 @@ function renderChatList() {
   }
 }
 
+function renderChatMessagesFromStore() {
+  clearMessages();
+  if (!currentChat.type || !currentChat.id) return;
+  const key = chatKey(currentChat.type, currentChat.id);
+  const arr = messagesByChat.get(key) || [];
+  for (const m of arr) {
+    if (m.kind === 'text') {
+      addMessageBubble({
+        from: m.from,
+        isMe: m.isMe,
+        text: m.text,
+        ts: m.ts
+      });
+    } else if (m.kind === 'voice') {
+      addVoiceMessageBubble({
+        from: m.from,
+        isMe: m.isMe,
+        audio: m.audio,
+        ts: m.ts
+      });
+    }
+  }
+}
+
 function selectDirectChat(code) {
   currentChat = { type: 'direct', id: code };
   // azzera unread
@@ -454,7 +539,7 @@ function selectDirectChat(code) {
   titleEl.textContent = `Chat con ${code}`;
   if (subEl) subEl.textContent = 'Messaggi e vocali 1:1';
 
-  clearMessages();
+  renderChatMessagesFromStore();
 }
 
 // ===== GRUPPI =====
@@ -494,7 +579,7 @@ function renderOrUpdateGroup(groupLike) {
       const subEl = chatHeaderEl.querySelector('.chat-header-sub');
       titleEl.textContent = groupLike.name ? groupLike.name : `Group ${id}`;
       if (subEl) subEl.textContent = 'Chat di gruppo';
-      clearMessages();
+      renderChatMessagesFromStore();
     });
     myGroupsEl.appendChild(el);
   }
@@ -531,7 +616,7 @@ function addVoiceMessageBubble({ from, isMe, audio, ts }) {
 
   const audioEl = document.createElement('audio');
   audioEl.controls = true;
-  audioEl.src = audio; // data URL base64
+  audioEl.src = audio;
 
   el.appendChild(audioEl);
   chatMessagesEl.appendChild(el);
@@ -581,8 +666,23 @@ async function toggleVoiceRecording() {
         const blob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' }); // [web:202]
         const base64 = await blobToBase64(blob);
         const audioDataUrl = `data:audio/webm;codecs=opus;base64,${base64}`;
-        sendVoiceMessage(audioDataUrl);
 
+        // salva subito in memoria
+        pushMessageToStore('direct', currentChat.id, {
+          kind: 'voice',
+          from: myCode,
+          isMe: true,
+          audio: audioDataUrl,
+          ts: Date.now()
+        });
+        addVoiceMessageBubble({
+          from: myCode,
+          isMe: true,
+          audio: audioDataUrl,
+          ts: Date.now()
+        });
+
+        sendVoiceMessage(audioDataUrl);
         resetRecordingState();
       };
 
@@ -645,7 +745,6 @@ function sendVoiceMessage(audioDataUrl) {
 
 // ===== AUTO‑LOGIN + TEMA ALL’APERTURA =====
 window.addEventListener('load', async () => {
-  // tema
   const savedTheme = loadTheme();
   if (savedTheme) {
     applyTheme(savedTheme);
