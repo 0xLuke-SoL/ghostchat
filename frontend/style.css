@@ -362,7 +362,6 @@ body[data-theme="light"] .msg.me {
     flex-direction: column;
   }
 
-  /* Chat quasi full-screen */
   .card {
     min-width: 100%;
     padding: 12px 12px 10px;
@@ -376,10 +375,17 @@ body[data-theme="light"] .msg.me {
     padding-right: 0;
   }
 
-  /* Campo input più comodo da toccare */
+  /* Input + pulsanti su 2 righe per non far uscire i bottoni */
   .input-row {
+    flex-direction: column;
+    align-items: stretch;
     gap: 6px;
   }
+  .input-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   input {
     padding: 10px 12px;
     font-size: 15px;
@@ -389,7 +395,6 @@ body[data-theme="light"] .msg.me {
     font-size: 14px;
   }
 
-  /* Liste un po' più grandi */
   .chat-list,
   .list {
     font-size: 13px;
